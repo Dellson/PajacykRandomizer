@@ -4,16 +4,16 @@ namespace PajacykRandomizer
 {
     class PajacykPage
     {
+        public const string MainUrl = "https://www.pajacyk.pl";
         private readonly IWebDriver firefoxDriver;
-        public const string mainUrl = "https://www.pajacyk.pl";
 
         public PajacykPage(IWebDriver firefoxDriver) =>
             this.firefoxDriver = firefoxDriver;
 
-        public IWebElement GetDeactivatedBellyButton() =>
-            firefoxDriver.FindElement(By.ClassName("paj-click"));
+        public IWebElement GetBullyButton() =>
+            firefoxDriver.FindElement(By.ClassName("pajacyk__clickbox"));
 
-        public IWebElement GetActivatedBellyButton() =>
-            firefoxDriver.FindElement(By.ClassName("paj-click2"));
+        public string GetClicksNumber() =>
+            firefoxDriver.FindElement(By.XPath("//*[@class='pajacyk__thankyou']//span")).Text;
     }
 }

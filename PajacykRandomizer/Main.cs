@@ -9,78 +9,47 @@ using OpenQA.Selenium.Interactions;
 namespace PajacykRandomizer
 {
     [TestFixture]
-    public class Main
+    public class PajacykMainPage
     {
-        private static IWebDriver firefoxDriver;
-        private static PajacykPage pajacykPage;
-        private static Random randomizer;
-
-        [SetUp]
-        public static void SetUp()
-        {
-            //firefoxDriver = new FirefoxDriver();
-            pajacykPage = new PajacykPage(firefoxDriver);
-            randomizer = GenerateRandomWithSeed();
-        }
-
-        [TearDown]
-        public static void TearDown() =>
-            GenerateRandomWithSeed();
-
         [Test]
-        public void ClickBellyButton()
+        public void ClickBellyButton(int loopCount)
         {
-            using (IWebDriver driver = new FirefoxDriver())
+            FirefoxOptions options = new FirefoxOptions();
+            options.AddArguments("--headless");
+
+            using (IWebDriver driver = new FirefoxDriver(options))
             {
-                Actions action = new Actions(driver);
-                FirefoxOptions options = new FirefoxOptions();
-                options.AddArguments("--headless");
-                int normalizedSample = -1;
-
-                randomizer = GenerateRandomWithSeed();
-
-                Normal normalDistBeforeClick = new Normal(200, 165, randomizer);
-                Normal normalDistAfterClick = new Normal(5000, 2000, randomizer);
-
                 PajacykPage pajacykPage = new PajacykPage(driver);
-                driver.Manage().Window.Maximize();
-                driver.Navigate().GoToUrl(PajacykPage.mainUrl);
+                driver.Navigate().GoToUrl(PajacykPage.MainUrl);
 
-                var deactivatedBellyButton = pajacykPage
-                    .GetDeactivatedBellyButton();
+                for (int i = 0; i < loopCount; i++)
+                {
+                    Actions action = new Actions(driver);
+                    IWebElement bellyButton = pajacykPage.GetBullyButton();
+                    Random randomizer = GenerateRandomWithSeed();
+                    double mean = 45000;
+                    double stddev = 13000;
+                    int delayBeforeReadingClickCount = 3000;
+                    int normalizedSample = GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
 
-                action.MoveToElement(deactivatedBellyButton).Perform();
+                    action.MoveToElement(bellyButton).Perform();
+                    action.Click(bellyButton).Perform();
 
-                // need to optimize randomization method using modified normal distribution
-                // also, add dynamic writing output to a file
-                normalizedSample = GetIntNormalizedSample(normalDistBeforeClick);
+                    Thread.Sleep(delayBeforeReadingClickCount);
+                    string numberOfClicks = pajacykPage.GetClicksNumber();
 
-                TestContext.WriteLine($"Normalized sample after click: {normalizedSample}.");
-                Thread.Sleep(normalizedSample);
+                    TestContext.WriteLine($"Normalized sample after click: {normalizedSample}.");
+                    TestContext.WriteLine($"Number of clicks: {numberOfClicks}");
+                    TestContext.WriteLine("\n");
 
-                pajacykPage
-                    .GetActivatedBellyButton()
-                    .Click();
-
-                normalizedSample = GetIntNormalizedSample(normalDistAfterClick);
-
-                TestContext.WriteLine($"Normalized sample before click: {normalizedSample}.");
-                Thread.Sleep(normalizedSample);
+                    Thread.Sleep(normalizedSample);
+                }
             }
         }
 
         [Test]
-        public void RepeateableClickBellyButton()
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                TestContext.WriteLine($"ClickBellyButton run start. Number of runs so far: {i}.");
-                ClickBellyButton();
-            }
-        }
-
-        private void LoadPage() => 
-            firefoxDriver.Navigate().GoToUrl(PajacykPage.mainUrl);
+        public void ClickBellyButtonRepeateably() =>
+            ClickBellyButton(1000);
 
         private static Random GenerateRandomWithSeed() =>
             new Random((int)(DateTime.Now.ToFileTime() % int.MaxValue));
@@ -88,13 +57,7 @@ namespace PajacykRandomizer
         private static int GetIntNormalizedSample(Normal normal) =>
             (int)Math.Ceiling(GetDoubleNormalizedSample(normal));
 
-        private static double GetDoubleNormalizedSample(Normal normal)
-        {
-            var sample = normal.Sample();
-            return Math.Abs(sample);
-        }
-
-        private static void CloseBrowser() =>
-            firefoxDriver.Quit();
+        private static double GetDoubleNormalizedSample(Normal normal) =>
+            Math.Abs(normal.Sample());
     }
 }

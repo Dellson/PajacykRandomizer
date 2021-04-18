@@ -5,18 +5,26 @@ using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Interactions;
+using PajacykRandomizer.Pages;
+using MathHelper = PajacykRandomizer.Helpers.MathHelper;
 
 namespace PajacykRandomizer
 {
     [TestFixture]
     public class PajacykMainPage
     {
-        [Test]
+        private FirefoxOptions options;
+
+        [SetUp]
+        public void SetUp()
+        {
+            options = new FirefoxOptions();
+            options.AddArguments("--headless");
+        }
+
+        //[Test]
         public void ClickBellyButton(int loopCount)
         {
-            FirefoxOptions options = new FirefoxOptions();
-            options.AddArguments("--headless");
-
             using (IWebDriver driver = new FirefoxDriver(options))
             {
                 PajacykPage pajacykPage = new PajacykPage(driver);
@@ -26,11 +34,11 @@ namespace PajacykRandomizer
                 {
                     Actions action = new Actions(driver);
                     IWebElement bellyButton = pajacykPage.GetBullyButton();
-                    Random randomizer = GenerateRandomWithSeed();
+                    Random randomizer = MathHelper.GenerateRandomWithSeed();
                     double mean = 45000;
-                    double stddev = 13000;
+                    double stddev = 15000;
                     int delayBeforeReadingClickCount = 3000;
-                    int normalizedSample = GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
+                    int normalizedSample = MathHelper.GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
 
                     action.MoveToElement(bellyButton).Perform();
                     action.Click(bellyButton).Perform();
@@ -40,7 +48,6 @@ namespace PajacykRandomizer
 
                     TestContext.WriteLine($"Normalized sample after click: {normalizedSample}.");
                     TestContext.WriteLine($"Number of clicks: {numberOfClicks}");
-                    TestContext.WriteLine("\n");
 
                     Thread.Sleep(normalizedSample);
                 }
@@ -49,15 +56,6 @@ namespace PajacykRandomizer
 
         [Test]
         public void ClickBellyButtonRepeateably() =>
-            ClickBellyButton(1000);
-
-        private static Random GenerateRandomWithSeed() =>
-            new Random((int)(DateTime.Now.ToFileTime() % int.MaxValue));
-
-        private static int GetIntNormalizedSample(Normal normal) =>
-            (int)Math.Ceiling(GetDoubleNormalizedSample(normal));
-
-        private static double GetDoubleNormalizedSample(Normal normal) =>
-            Math.Abs(normal.Sample());
+            ClickBellyButton(3);
     }
 }

@@ -37,25 +37,19 @@ namespace PajacykRandomizer
                     Random randomizer = MathHelper.GenerateRandomWithSeed();
                     double mean = 45000;
                     double stddev = 17000;
-                    int delayBeforeReadingClickCount = 8000;
+                    int minimumDelay = 8000;
                     int normalizedSample = MathHelper.GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
-                    normalizedSample = normalizedSample > delayBeforeReadingClickCount ? normalizedSample : delayBeforeReadingClickCount;
-                    var path = @"C:\Users\Paweł Dela\source\repos\PajacykRandomizer\test-output.txt";
+                    normalizedSample = normalizedSample > minimumDelay ? normalizedSample : minimumDelay;
+                    var path = @"C:\Projects\PajacykRandomizer-master\test-output.txt";
 
-                    action.MoveToElement(bellyButton).Perform();
-                    action.Click(bellyButton).Perform();
+                    try
+                    {
+                        action.MoveToElement(bellyButton).Perform();
+                        action.Click(bellyButton).Perform();
+                    }
+                    catch (NoSuchElementException) { }
 
-                    Thread.Sleep(delayBeforeReadingClickCount);
-                    string numberOfClicks = pajacykPage.GetClicksNumber();
-
-                    var line1 = "";//$"Normalized sample after click: {normalizedSample}.";
-                    var line2 = $"Total number of clicks: {numberOfClicks}";
-                    var line3 = $"Clicker number of clicks: {i}";
-                    TestContext.WriteLine(line1);
-                    TestContext.WriteLine(line2);
-                    TestContext.WriteLine(line3);
-                    File.AppendAllLines(path, new string[3] { line1, line2, line3 });
-
+                    File.AppendAllLines(path, new[] { $"{DateTime.Now}: Clicker number of clicks: {i}" });
                     Thread.Sleep(normalizedSample);
                 }
             }
@@ -63,6 +57,6 @@ namespace PajacykRandomizer
 
         [Test]
         public void ClickBellyButtonRepeateably() =>
-            ClickBellyButton(3);
+            ClickBellyButton(1000);
     }
 }

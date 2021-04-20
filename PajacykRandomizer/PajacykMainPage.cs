@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using MathNet.Numerics.Distributions;
 using NUnit.Framework;
@@ -22,7 +23,6 @@ namespace PajacykRandomizer
             options.AddArguments("--headless");
         }
 
-        //[Test]
         public void ClickBellyButton(int loopCount)
         {
             using (IWebDriver driver = new FirefoxDriver(options))
@@ -36,9 +36,11 @@ namespace PajacykRandomizer
                     IWebElement bellyButton = pajacykPage.GetBullyButton();
                     Random randomizer = MathHelper.GenerateRandomWithSeed();
                     double mean = 45000;
-                    double stddev = 15000;
-                    int delayBeforeReadingClickCount = 3000;
+                    double stddev = 17000;
+                    int delayBeforeReadingClickCount = 8000;
                     int normalizedSample = MathHelper.GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
+                    normalizedSample = normalizedSample > delayBeforeReadingClickCount ? normalizedSample : delayBeforeReadingClickCount;
+                    var path = @"C:\Users\Paweł Dela\source\repos\PajacykRandomizer\test-output.txt";
 
                     action.MoveToElement(bellyButton).Perform();
                     action.Click(bellyButton).Perform();
@@ -46,8 +48,13 @@ namespace PajacykRandomizer
                     Thread.Sleep(delayBeforeReadingClickCount);
                     string numberOfClicks = pajacykPage.GetClicksNumber();
 
-                    TestContext.WriteLine($"Normalized sample after click: {normalizedSample}.");
-                    TestContext.WriteLine($"Number of clicks: {numberOfClicks}");
+                    var line1 = "";//$"Normalized sample after click: {normalizedSample}.";
+                    var line2 = $"Total number of clicks: {numberOfClicks}";
+                    var line3 = $"Clicker number of clicks: {i}";
+                    TestContext.WriteLine(line1);
+                    TestContext.WriteLine(line2);
+                    TestContext.WriteLine(line3);
+                    File.AppendAllLines(path, new string[3] { line1, line2, line3 });
 
                     Thread.Sleep(normalizedSample);
                 }

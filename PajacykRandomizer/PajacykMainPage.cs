@@ -1,13 +1,11 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 using System.Threading;
 using MathNet.Numerics.Distributions;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
-using OpenQA.Selenium.Interactions;
-using PajacykRandomizer.Pages;
-using MathHelper = PajacykRandomizer.Helpers.MathHelper;
 
 namespace PajacykRandomizer
 {
@@ -15,48 +13,61 @@ namespace PajacykRandomizer
     public class PajacykMainPage
     {
         private FirefoxOptions options;
+        private string url;
+        private string path;
 
         [SetUp]
         public void SetUp()
         {
+            url = GetString(nameof(url));
+            path = GetString(nameof(path));
             options = new FirefoxOptions();
             options.AddArguments("--headless");
         }
 
+        [Test]
+        [TestCase(10)]
         public void ClickBellyButton(int loopCount)
         {
+            int errorCount = 0;
+
             using (IWebDriver driver = new FirefoxDriver(options))
             {
-                PajacykPage pajacykPage = new PajacykPage(driver);
-                driver.Navigate().GoToUrl(PajacykPage.MainUrl);
+                driver.Navigate().GoToUrl(url);
 
-                for (int i = 0; i < loopCount; i++)
+                for (int i = 1; i <= loopCount; i++)
                 {
-                    Actions action = new Actions(driver);
-                    IWebElement bellyButton = pajacykPage.GetBullyButton();
-                    Random randomizer = MathHelper.GenerateRandomWithSeed();
-                    double mean = 45000;
-                    double stddev = 17000;
-                    int minimumDelay = 8000;
-                    int normalizedSample = MathHelper.GetIntNormalizedSample(new Normal(mean, stddev, randomizer));
-                    normalizedSample = normalizedSample > minimumDelay ? normalizedSample : minimumDelay;
-                    var path = @"C:\Projects\PajacykRandomizer-master\test-output.txt";
-
                     try
                     {
-                        action.MoveToElement(bellyButton).Perform();
-                        action.Click(bellyButton).Perform();
+                        IWebElement button = driver.FindElement(By.ClassName("pajacyk__clickbox"));
+                        button.Click();
                     }
-                    catch (NoSuchElementException) { }
+                    catch (NoSuchElementException)
+                    {
+                        errorCount++;
+                    }
 
-                    File.AppendAllLines(path, new[] { $"{DateTime.Now}: Clicker number of clicks: {i}" });
-                    Thread.Sleep(normalizedSample);
+                    File.AppendAllText(path, $"{DateTime.Now}: Number of clicks: {(i - errorCount).ToString().PadLeft(4, '0')}\n");
+                    Thread.Sleep(GetIntSample());
                 }
             }
         }
 
-        [Test]
-        public void ClickBellyButtonRepeateably() =>
-            ClickBellyButton(1000);
+        public static int GetIntSample()
+        {
+            var normal = new Normal(
+                GetDouble("mean"),
+                GetDouble("stddev"),
+                new Random());
+
+            return (int)Math.Abs(normal.Sample());
+        }
+
+        public static string GetString(string key) =>
+            ConfigurationManager.AppSettings[key];
+
+        public static double GetDouble(string key) =>
+            Convert.ToDouble(ConfigurationManager.AppSettings[key]);
     }
 }
+

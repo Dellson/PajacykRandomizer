@@ -10,7 +10,7 @@ using OpenQA.Selenium.Firefox;
 namespace PajacykRandomizer
 {
     [TestFixture]
-    public class PajacykMainPage
+    public class RunClicker
     {
         private FirefoxOptions options;
         private string url;
